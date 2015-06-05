@@ -2,7 +2,7 @@
 //  AppDelegate.swift
 //  Pitch Perfect
 //
-//  Created by Ioannis Tornazakis on 18/12/14.
+//  Created by Ioannis Tornazakis on 8/12/14.
 //  Copyright (c) 2014 Ioannis Tornazakis. All rights reserved.
 //
 
