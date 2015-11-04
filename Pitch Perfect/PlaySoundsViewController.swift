@@ -11,7 +11,7 @@ import AVFoundation
 
 class PlaySoundsViewController: UIViewController {
     
-    // MARK: Attributes
+    // MARK: - Properties
     
     // Audio players and engines
     var audioPlayer:AVAudioPlayer!
@@ -31,69 +31,67 @@ class PlaySoundsViewController: UIViewController {
     var noDelay:NSTimeInterval      = 0.0
     var smallDelay:NSTimeInterval   = 1.0
     
-    // MARK: Overrides
+    // MARK: - Lifecycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
 
         // Audio player
-        audioPlayer = AVAudioPlayer(contentsOfURL: receivedAudio.filePathUrl, error:nil)
+        audioPlayer = try? AVAudioPlayer(contentsOfURL: receivedAudio.filePathUrl)
         audioPlayer.enableRate = true
         
         // Audio player echo (Used for the echo effect only)
-        audioPlayerEcho = AVAudioPlayer(contentsOfURL: receivedAudio.filePathUrl, error:nil)
+        audioPlayerEcho = try? AVAudioPlayer(contentsOfURL: receivedAudio.filePathUrl)
         audioPlayerEcho.enableRate = true
         
         // Audio Engine
         audioEngine = AVAudioEngine()
-        audioFile = AVAudioFile(forReading: receivedAudio.filePathUrl, error: nil)
+        audioFile = try? AVAudioFile(forReading: receivedAudio.filePathUrl)
         
         // Ensure the audio is played with proper volume on a real device
         let session = AVAudioSession.sharedInstance()
-        var error: NSError?
-        session.setCategory(AVAudioSessionCategoryPlayAndRecord, error: &error)
-        session.overrideOutputAudioPort(AVAudioSessionPortOverride.Speaker, error: &error)
-        session.setActive(true, error: &error)
-    }
-
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
+        do {
+            try session.setCategory(AVAudioSessionCategoryPlayAndRecord)
+        } catch let error1 as NSError {
+            let _ = error1
+        }
+        do {
+            try session.overrideOutputAudioPort(AVAudioSessionPortOverride.Speaker)
+        } catch let error1 as NSError {
+            let _ = error1
+        }
+        do {
+            try session.setActive(true)
+        } catch let error1 as NSError {
+            let _ = error1
+        }
     }
     
-    // MARK: Actions
+    // MARK: - Actions
     
     @IBAction func playSlowAudio(sender: UIButton) {
         stopAllAudio()
         prepareAudio(audioPlayer, rate: slowRate, volume: normalVolume, delay: noDelay)
         audioPlayer.play()
-        println("> Slow audio effect")
     }
 
     @IBAction func playFastAudio(sender: UIButton) {
         stopAllAudio()
         prepareAudio(audioPlayer, rate: fastRate, volume: normalVolume, delay: noDelay)
         audioPlayer.play()
-        println("> Fast audio effect")
     }
     
     @IBAction func playChipmunkAudio(sender: UIButton) {
         stopAllAudio()
         playAudioWithVariablePitch(1000)
-        println("> Chipmunk audio effect")
     }
     
     @IBAction func playDarthVaderAudio(sender: UIButton) {
         stopAllAudio()
         playAudioWithVariablePitch(-1000)
-        println("> Darth Vader audio effect")
     }
     
-    
     /**
-        playEchoAudio()
-
-        Description:
         -   Echo is implemented by the use of two players, one
             on top of the other
         -   The first player just plays the original recording
@@ -106,20 +104,15 @@ class PlaySoundsViewController: UIViewController {
         prepareAudio(audioPlayerEcho, rate: normalRate, volume: lowVolume, delay: smallDelay)
         audioPlayer.play()
         audioPlayerEcho.play()
-        println("> Echo audio effect")
     }
     
     @IBAction func stopPlayingAudio(sender: UIButton) {
         stopAllAudio()
-        println("> Stop audio")
     }
     
-    // MARK: Utilities
+    // MARK: - Helpers
     
     /**
-        prepareAudio()
-
-        Description:
         - Prepares the provided audio player with basic
           audio parameters:
         - rate
@@ -128,41 +121,37 @@ class PlaySoundsViewController: UIViewController {
     */
     func prepareAudio(audioPlayer: AVAudioPlayer, rate: Float, volume: Float, delay: NSTimeInterval) {
         audioPlayer.currentTime = 0.0
-        var delayNormalized = (audioPlayer.deviceCurrentTime + delay)
+        let delayNormalized = (audioPlayer.deviceCurrentTime + delay)
         audioPlayer.playAtTime(delayNormalized)
         audioPlayer.volume = volume
         audioPlayer.rate = rate
     }
     
     /**
-        playAudioWithVariablePitch()
-
-        Description:
-        - Prepares the audio player to be able to handle
-          the pitch
+        Prepares the audio player to be able to handle the pitch
     */
     func playAudioWithVariablePitch(pitch: Float){
-        var audioPlayerNode = AVAudioPlayerNode()
+        let audioPlayerNode = AVAudioPlayerNode()
         audioEngine.attachNode(audioPlayerNode)
-        var changePitchEffect = AVAudioUnitTimePitch()
+        let changePitchEffect = AVAudioUnitTimePitch()
         changePitchEffect.pitch = pitch
         audioEngine.attachNode(changePitchEffect)
         audioEngine.connect(audioPlayerNode, to: changePitchEffect, format: nil)
         audioEngine.connect(changePitchEffect, to: audioEngine.outputNode, format: nil)
         audioPlayerNode.scheduleFile(audioFile, atTime: nil, completionHandler: nil)
-        audioEngine.startAndReturnError(nil)
+        do {
+            try audioEngine.start()
+        } catch _ {
+        }
         audioPlayerNode.play()
     }
     
     /**
-        stopAllAudio()
-
-        Description:
         -   Stops all audio players and audio engines.
         -   Needs to be called from within all action methods
-          that invoke a player before using the player in
-          order to avoid playing one player on top of the
-          other incidentaly
+            that invoke a player before using the player in
+            order to avoid playing one player on top of the
+            other incidentaly
     */
     func stopAllAudio() {
         audioPlayer.stop()

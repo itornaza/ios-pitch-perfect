@@ -11,24 +11,14 @@ import AVFoundation
 
 class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
 
-    // MARK: Attributes
+    // MARK: - Properties
     
     var audioRecorder:AVAudioRecorder!
     var recordedAudio:RecordedAudio!
     var pauseFlag:Bool!
     var firstTimeFlag:Bool!
     
-    // MARK: Overrides
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
-    }
-
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
-    }
+    // MARK: - Lifecycle
 
     override func viewWillAppear(animated: Bool) {
         // Buttons state
@@ -46,21 +36,7 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
         firstTimeFlag   = true
     }
     
-    /**
-        prepareForSegue()
-
-        Description:
-        -   Prepares the audio data that have been captured in order
-          to be transfered by the upcomming segue
-    */
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        if (segue.identifier == "stopRecording") {
-            // Send the audio to the PlaySoundsViewController
-            let playSoundsVC:PlaySoundsViewController = segue.destinationViewController as PlaySoundsViewController
-            let data = sender as RecordedAudio
-            playSoundsVC.receivedAudio = data
-        }
-    }
+    // MARK: - Outlets
     
     @IBOutlet weak var recordButton: UIButton!
     @IBOutlet weak var stopButton: UIButton!
@@ -69,23 +45,23 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
     @IBOutlet weak var tapToResume: UILabel!
     @IBOutlet weak var tapToPause: UILabel!
 
+    // MARK: - Actions
+    
     /**
-        recordingAudio()
-
-        Description:
         -   This Action controls the recording states which are:
-          -   Initiate recording
-          -   Pause recording
-          -   Resume recording
+            1.   Initiate recording
+            2.   Pause recording
+            3.   Resume recording
 
         -   In this way the microphone icon can be used to
-          toggle between these states and appropriate messages
-          inform the user what to do next by tapping the mic
+            toggle between these states and appropriate messages
+            inform the user what to do next by tapping the mic
 
         -   Note that the pauseFlag and the firstTimeFlag
-          are defining the state transitions
+            are defining the state transitions
     */
     @IBAction func recordingAudio(sender: UIButton) {
+        
         // Initial recording state
         if ( pauseFlag == false && (firstTimeFlag == true) ) {
             initiateRecording()
@@ -93,13 +69,13 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
             firstTimeFlag   = false
             pauseFlag       = true
             
-            // Pause state
+        // Pause state
         } else if ( pauseFlag == true ) {
             pauseRecording()
             // prepare flags for the resume state
             pauseFlag = false
             
-            // Resume state
+        // Resume state
         } else {
             resumeRecording()
             // Prepare flags for the pause state
@@ -122,21 +98,19 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
         firstTimeFlag   = true
         
         // Close recording session
-        var audioSession = AVAudioSession.sharedInstance()
-        audioSession.setActive(false, error: nil)
-        
-        println("> Stop recording")
+        let audioSession = AVAudioSession.sharedInstance()
+        do {
+            try audioSession.setActive(false)
+        } catch _ {
+        }
     }
     
-    // MARK: Utilities
+    // MARK: - Helpers
     
     /**
-        initiateRecording()
-
-        Description:
         -   Initializes the recorder with all necessary parameters
-          and begins recording for the first time after the
-          scene loads
+            and begins recording for the first time after the
+            scene loads
         -   Sets up the file that the recording is stored
     */
     func initiateRecording() {
@@ -158,15 +132,19 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
         let recordingName = formatter.stringFromDate(currentDateTime)+".wav"
         let pathArray = [dirPath, recordingName]
         let filePath = NSURL.fileURLWithPathComponents(pathArray)
-        println(filePath)
         
         // Initiate recording session
-        var session = AVAudioSession.sharedInstance()
-        session.setCategory(AVAudioSessionCategoryPlayAndRecord, error: nil)
-        
+        let session = AVAudioSession.sharedInstance()
+        do {
+            try session.setCategory(AVAudioSessionCategoryPlayAndRecord)
+        } catch _ {
+        }
         
         // Audio recorder and its parameters
-        audioRecorder = AVAudioRecorder(URL: filePath, settings: nil, error: nil)
+        do {
+            try audioRecorder = AVAudioRecorder(URL: filePath!, settings: [:])  //(URL: filePath, settings: nil, error: nil)
+        } catch _ {
+        }
         audioRecorder.meteringEnabled = true
         audioRecorder.prepareToRecord()
         
@@ -177,15 +155,10 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
         
         // Start recording
         audioRecorder.record()
-        
-        println("> Initiate recording")
     }
     
     /**
-        pauseRecording()
-
-        Description:
-        -   Pauses the recording once it has already been initiated
+        Pauses the recording once it has already been initiated
     */
     func pauseRecording() {
         audioRecorder.pause()
@@ -202,15 +175,10 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
         
         //
         pauseFlag = false
-        
-        println("> Pause recording");
     }
     
     /**
-        resumeRecording()
-
-        Description:
-        -   Resumes recording after it has been paused
+        Resumes recording after it has been paused
     */
     func resumeRecording() {
         audioRecorder.record()
@@ -226,23 +194,21 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
         stopButton.hidden           = false
         
         pauseFlag = true
-        
-        println("> Resume recording")
     }
     
-    // MARK: Delegates
+    // MARK: - Delegates
     
     /**
-        audioRecorderDidFinishRecording()
-
-        Description:
         -   Reference to AVAudioRecorderDelegate protocol
         -   Ensures that the segue from the recorder to the player
-          is performed if and only if the recording was completed with
-          success. Otherwise displays an error message
+            is performed if and only if the recording was completed with
+            success. Otherwise displays an error message
     */
-    func audioRecorderDidFinishRecording(recorder: AVAudioRecorder!, successfully flag: Bool) {
-        if (flag) { // if the recording was successful
+    func audioRecorderDidFinishRecording(recorder: AVAudioRecorder, successfully flag: Bool) {
+
+        // recording is successful
+        if (flag) {
+            
             // Save the recorded audio through its constructor
             recordedAudio = RecordedAudio(filePathUrl: recorder.url, title: recorder.url.lastPathComponent!)
             
@@ -250,7 +216,9 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
             // just after we have finish recording
             self.performSegueWithIdentifier("stopRecording", sender: recordedAudio)
             
-        } else {    // Handle error in recording
+        // Recording is not successful
+        } else {
+            
             // Buttons state
             recordButton.enabled = true
             
@@ -264,8 +232,21 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
             // Set up attributes
             pauseFlag       = false
             firstTimeFlag   = true
-            
-            println("> Recording was not successful")
+        }
+    }
+    
+    // MARK: - Segues
+    
+    /**
+        Prepares the audio data that have been captured in order
+        to be transfered by the upcomming segue
+    */
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        if (segue.identifier == "stopRecording") {
+            // Send the audio to the PlaySoundsViewController
+            let playSoundsVC:PlaySoundsViewController = segue.destinationViewController as! PlaySoundsViewController
+            let data = sender as! RecordedAudio
+            playSoundsVC.receivedAudio = data
         }
     }
 }
