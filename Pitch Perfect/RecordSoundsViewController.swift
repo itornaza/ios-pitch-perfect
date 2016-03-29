@@ -9,7 +9,7 @@
 import UIKit
 import AVFoundation
 
-class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
+class RecordSoundsViewController: UIViewController {
 
     // MARK: - Properties
     
@@ -196,16 +196,32 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
         pauseFlag = true
     }
     
-    // MARK: - Delegates
+    // MARK: - Segues
     
     /**
-        -   Reference to AVAudioRecorderDelegate protocol
-        -   Ensures that the segue from the recorder to the player
-            is performed if and only if the recording was completed with
-            success. Otherwise displays an error message
+        Prepares the audio data that have been captured in order
+        to be transfered by the upcomming segue
     */
-    func audioRecorderDidFinishRecording(recorder: AVAudioRecorder, successfully flag: Bool) {
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        if (segue.identifier == "stopRecording") {
+            // Send the audio to the PlaySoundsViewController
+            let playSoundsVC:PlaySoundsViewController = segue.destinationViewController as! PlaySoundsViewController
+            let data = sender as! RecordedAudio
+            playSoundsVC.receivedAudio = data
+        }
+    }
+}
 
+extension RecordSoundsViewController: AVAudioRecorderDelegate {
+    
+    /**
+     -  Reference to AVAudioRecorderDelegate protocol
+     -  Ensures that the segue from the recorder to the player
+        is performed if and only if the recording was completed with
+        success. Otherwise displays an error message
+     */
+    func audioRecorderDidFinishRecording(recorder: AVAudioRecorder, successfully flag: Bool) {
+        
         // recording is successful
         if (flag) {
             
@@ -216,7 +232,7 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
             // just after we have finish recording
             self.performSegueWithIdentifier("stopRecording", sender: recordedAudio)
             
-        // Recording is not successful
+            // Recording is not successful
         } else {
             
             // Buttons state
@@ -234,19 +250,5 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
             firstTimeFlag   = true
         }
     }
-    
-    // MARK: - Segues
-    
-    /**
-        Prepares the audio data that have been captured in order
-        to be transfered by the upcomming segue
-    */
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        if (segue.identifier == "stopRecording") {
-            // Send the audio to the PlaySoundsViewController
-            let playSoundsVC:PlaySoundsViewController = segue.destinationViewController as! PlaySoundsViewController
-            let data = sender as! RecordedAudio
-            playSoundsVC.receivedAudio = data
-        }
-    }
 }
+
