@@ -28,8 +28,8 @@ class PlaySoundsViewController: UIViewController {
     var fastRate:Float      = 1.5
     var normalVolume:Float  = 1.0
     var lowVolume:Float     = 0.3
-    var noDelay:NSTimeInterval      = 0.0
-    var smallDelay:NSTimeInterval   = 1.0
+    var noDelay:TimeInterval      = 0.0
+    var smallDelay:TimeInterval   = 1.0
     
     // MARK: - Lifecycle
     
@@ -37,16 +37,16 @@ class PlaySoundsViewController: UIViewController {
         super.viewDidLoad()
 
         // Audio player
-        audioPlayer = try? AVAudioPlayer(contentsOfURL: receivedAudio.filePathUrl)
+        audioPlayer = try? AVAudioPlayer(contentsOf: receivedAudio.filePathUrl as URL)
         audioPlayer.enableRate = true
         
         // Audio player echo (Used for the echo effect only)
-        audioPlayerEcho = try? AVAudioPlayer(contentsOfURL: receivedAudio.filePathUrl)
+        audioPlayerEcho = try? AVAudioPlayer(contentsOf: receivedAudio.filePathUrl as URL)
         audioPlayerEcho.enableRate = true
         
         // Audio Engine
         audioEngine = AVAudioEngine()
-        audioFile = try? AVAudioFile(forReading: receivedAudio.filePathUrl)
+        audioFile = try? AVAudioFile(forReading: receivedAudio.filePathUrl as URL)
         
         // Ensure the audio is played with proper volume on a real device
         let session = AVAudioSession.sharedInstance()
@@ -56,7 +56,7 @@ class PlaySoundsViewController: UIViewController {
             let _ = error1
         }
         do {
-            try session.overrideOutputAudioPort(AVAudioSessionPortOverride.Speaker)
+            try session.overrideOutputAudioPort(AVAudioSessionPortOverride.speaker)
         } catch let error1 as NSError {
             let _ = error1
         }
@@ -69,24 +69,24 @@ class PlaySoundsViewController: UIViewController {
     
     // MARK: - Actions
     
-    @IBAction func playSlowAudio(sender: UIButton) {
+    @IBAction func playSlowAudio(_ sender: UIButton) {
         stopAllAudio()
         prepareAudio(audioPlayer, rate: slowRate, volume: normalVolume, delay: noDelay)
         audioPlayer.play()
     }
 
-    @IBAction func playFastAudio(sender: UIButton) {
+    @IBAction func playFastAudio(_ sender: UIButton) {
         stopAllAudio()
         prepareAudio(audioPlayer, rate: fastRate, volume: normalVolume, delay: noDelay)
         audioPlayer.play()
     }
     
-    @IBAction func playChipmunkAudio(sender: UIButton) {
+    @IBAction func playChipmunkAudio(_ sender: UIButton) {
         stopAllAudio()
         playAudioWithVariablePitch(1000)
     }
     
-    @IBAction func playDarthVaderAudio(sender: UIButton) {
+    @IBAction func playDarthVaderAudio(_ sender: UIButton) {
         stopAllAudio()
         playAudioWithVariablePitch(-1000)
     }
@@ -98,7 +98,7 @@ class PlaySoundsViewController: UIViewController {
         -   The second player plays the original recording 
             but with a small time delay and in lower volume
     */
-    @IBAction func playEchoAudio(sender: UIButton) {
+    @IBAction func playEchoAudio(_ sender: UIButton) {
         stopAllAudio()
         prepareAudio(audioPlayer, rate: normalRate, volume: normalVolume, delay: noDelay)
         prepareAudio(audioPlayerEcho, rate: normalRate, volume: lowVolume, delay: smallDelay)
@@ -106,7 +106,7 @@ class PlaySoundsViewController: UIViewController {
         audioPlayerEcho.play()
     }
     
-    @IBAction func stopPlayingAudio(sender: UIButton) {
+    @IBAction func stopPlayingAudio(_ sender: UIButton) {
         stopAllAudio()
     }
     
@@ -119,10 +119,10 @@ class PlaySoundsViewController: UIViewController {
         - volume
         - delay
     */
-    func prepareAudio(audioPlayer: AVAudioPlayer, rate: Float, volume: Float, delay: NSTimeInterval) {
+    func prepareAudio(_ audioPlayer: AVAudioPlayer, rate: Float, volume: Float, delay: TimeInterval) {
         audioPlayer.currentTime = 0.0
         let delayNormalized = (audioPlayer.deviceCurrentTime + delay)
-        audioPlayer.playAtTime(delayNormalized)
+        audioPlayer.play(atTime: delayNormalized)
         audioPlayer.volume = volume
         audioPlayer.rate = rate
     }
@@ -130,15 +130,15 @@ class PlaySoundsViewController: UIViewController {
     /**
         Prepares the audio player to be able to handle the pitch
     */
-    func playAudioWithVariablePitch(pitch: Float){
+    func playAudioWithVariablePitch(_ pitch: Float){
         let audioPlayerNode = AVAudioPlayerNode()
-        audioEngine.attachNode(audioPlayerNode)
+        audioEngine.attach(audioPlayerNode)
         let changePitchEffect = AVAudioUnitTimePitch()
         changePitchEffect.pitch = pitch
-        audioEngine.attachNode(changePitchEffect)
+        audioEngine.attach(changePitchEffect)
         audioEngine.connect(audioPlayerNode, to: changePitchEffect, format: nil)
         audioEngine.connect(changePitchEffect, to: audioEngine.outputNode, format: nil)
-        audioPlayerNode.scheduleFile(audioFile, atTime: nil, completionHandler: nil)
+        audioPlayerNode.scheduleFile(audioFile, at: nil, completionHandler: nil)
         do {
             try audioEngine.start()
         } catch _ {

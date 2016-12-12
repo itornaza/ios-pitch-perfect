@@ -20,16 +20,16 @@ class RecordSoundsViewController: UIViewController {
     
     // MARK: - Lifecycle
 
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         // Buttons state
-        recordButton.enabled = true
+        recordButton.isEnabled = true
         
         // Display appropriate labels
-        tapToRecord.hidden          = false
-        recordingInProgress.hidden  = true
-        tapToPause.hidden           = true
-        tapToResume.hidden          = true
-        stopButton.hidden           = true
+        tapToRecord.isHidden          = false
+        recordingInProgress.isHidden  = true
+        tapToPause.isHidden           = true
+        tapToResume.isHidden          = true
+        stopButton.isHidden           = true
         
         // Set up attributes
         pauseFlag       = false
@@ -60,7 +60,7 @@ class RecordSoundsViewController: UIViewController {
         -   Note that the pauseFlag and the firstTimeFlag
             are defining the state transitions
     */
-    @IBAction func recordingAudio(sender: UIButton) {
+    @IBAction func recordingAudio(_ sender: UIButton) {
         
         // Initial recording state
         if ( pauseFlag == false && (firstTimeFlag == true) ) {
@@ -83,15 +83,15 @@ class RecordSoundsViewController: UIViewController {
         }
     }
     
-    @IBAction func stopRecording(sender: UIButton) {
+    @IBAction func stopRecording(_ sender: UIButton) {
         audioRecorder.stop()
         
         // Display appropriate labels
-        tapToRecord.hidden          = false
-        recordingInProgress.hidden  = true
-        tapToPause.hidden           = true
-        tapToResume.hidden          = true
-        stopButton.hidden           = true
+        tapToRecord.isHidden          = false
+        recordingInProgress.isHidden  = true
+        tapToPause.isHidden           = true
+        tapToResume.isHidden          = true
+        stopButton.isHidden           = true
         
         // Set up attributes
         pauseFlag       = false
@@ -115,23 +115,23 @@ class RecordSoundsViewController: UIViewController {
     */
     func initiateRecording() {
         // Buttons state
-        recordButton.enabled = true
+        recordButton.isEnabled = true
         
         // Display appropriate labels
-        tapToRecord.hidden          = true
-        recordingInProgress.hidden  = false
-        tapToPause.hidden           = false
-        tapToResume.hidden          = true
-        stopButton.hidden           = false
+        tapToRecord.isHidden          = true
+        recordingInProgress.isHidden  = false
+        tapToPause.isHidden           = false
+        tapToResume.isHidden          = true
+        stopButton.isHidden           = false
         
         // Recording file (unique filename and path)
-        let dirPath = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] as String
-        let currentDateTime = NSDate()
-        let formatter = NSDateFormatter()
+        let dirPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
+        let currentDateTime = Date()
+        let formatter = DateFormatter()
         formatter.dateFormat = "ddMMyyyy-HHmmss"
-        let recordingName = formatter.stringFromDate(currentDateTime)+".wav"
+        let recordingName = formatter.string(from: currentDateTime)+".wav"
         let pathArray = [dirPath, recordingName]
-        let filePath = NSURL.fileURLWithPathComponents(pathArray)
+        let filePath = NSURL.fileURL(withPathComponents: pathArray)
         
         // Initiate recording session
         let session = AVAudioSession.sharedInstance()
@@ -142,10 +142,10 @@ class RecordSoundsViewController: UIViewController {
         
         // Audio recorder and its parameters
         do {
-            try audioRecorder = AVAudioRecorder(URL: filePath!, settings: [:])  //(URL: filePath, settings: nil, error: nil)
+            try audioRecorder = AVAudioRecorder(url: filePath!, settings: [:])  //(URL: filePath, settings: nil, error: nil)
         } catch _ {
         }
-        audioRecorder.meteringEnabled = true
+        audioRecorder.isMeteringEnabled = true
         audioRecorder.prepareToRecord()
         
         // This class becomes a delegate of the AVAudioRecorderDelegate
@@ -164,14 +164,14 @@ class RecordSoundsViewController: UIViewController {
         audioRecorder.pause()
         
         // Buttons state
-        recordButton.enabled = true
+        recordButton.isEnabled = true
         
         // Display appropriate labels
-        recordingInProgress.hidden  = true
-        tapToRecord.hidden          = true
-        tapToPause.hidden           = true
-        tapToResume.hidden          = false
-        stopButton.hidden           = false
+        recordingInProgress.isHidden  = true
+        tapToRecord.isHidden          = true
+        tapToPause.isHidden           = true
+        tapToResume.isHidden          = false
+        stopButton.isHidden           = false
         
         //
         pauseFlag = false
@@ -184,14 +184,14 @@ class RecordSoundsViewController: UIViewController {
         audioRecorder.record()
         
         // Buttons state
-        recordButton.enabled = true
+        recordButton.isEnabled = true
         
         // Display appropriate labels
-        recordingInProgress.hidden  = false
-        tapToRecord.hidden          = true
-        tapToPause.hidden           = false
-        tapToResume.hidden          = true
-        stopButton.hidden           = false
+        recordingInProgress.isHidden  = false
+        tapToRecord.isHidden          = true
+        tapToPause.isHidden           = false
+        tapToResume.isHidden          = true
+        stopButton.isHidden           = false
         
         pauseFlag = true
     }
@@ -202,10 +202,10 @@ class RecordSoundsViewController: UIViewController {
         Prepares the audio data that have been captured in order
         to be transfered by the upcomming segue
     */
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if (segue.identifier == "stopRecording") {
             // Send the audio to the PlaySoundsViewController
-            let playSoundsVC:PlaySoundsViewController = segue.destinationViewController as! PlaySoundsViewController
+            let playSoundsVC:PlaySoundsViewController = segue.destination as! PlaySoundsViewController
             let data = sender as! RecordedAudio
             playSoundsVC.receivedAudio = data
         }
@@ -220,30 +220,30 @@ extension RecordSoundsViewController: AVAudioRecorderDelegate {
         is performed if and only if the recording was completed with
         success. Otherwise displays an error message
      */
-    func audioRecorderDidFinishRecording(recorder: AVAudioRecorder, successfully flag: Bool) {
+    func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
         
         // recording is successful
         if (flag) {
             
             // Save the recorded audio through its constructor
-            recordedAudio = RecordedAudio(filePathUrl: recorder.url, title: recorder.url.lastPathComponent!)
+            recordedAudio = RecordedAudio(filePathUrl: recorder.url, title: recorder.url.lastPathComponent)
             
             // Move to the second scene, aka perform segue
             // just after we have finish recording
-            self.performSegueWithIdentifier("stopRecording", sender: recordedAudio)
+            self.performSegue(withIdentifier: "stopRecording", sender: recordedAudio)
             
             // Recording is not successful
         } else {
             
             // Buttons state
-            recordButton.enabled = true
+            recordButton.isEnabled = true
             
             // Display appropriate labels
-            tapToRecord.hidden          = false
-            recordingInProgress.hidden  = true
-            tapToPause.hidden           = true
-            tapToResume.hidden          = true
-            stopButton.hidden           = true
+            tapToRecord.isHidden          = false
+            recordingInProgress.isHidden  = true
+            tapToPause.isHidden           = true
+            tapToResume.isHidden          = true
+            stopButton.isHidden           = true
             
             // Set up attributes
             pauseFlag       = false

@@ -21,13 +21,13 @@ class RecordedAudio: NSObject{
     
     // MARK: - Attributes
 
-    var filePathUrl: NSURL!
+    var filePathUrl: URL!
     var title: String!
     
 
     // MARK: - Default constructors
     
-    init(filePathUrl: NSURL, title: String) {
+    init(filePathUrl: URL, title: String) {
         self.filePathUrl = filePathUrl
         self.title = title
     }
